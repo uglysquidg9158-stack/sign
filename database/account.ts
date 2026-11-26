@@ -8,3 +8,16 @@ export async function getLoggedInAccount():Promise<Account|null>{const{data:u,er
 export async function clearUserSession():Promise<void>{const{error}=await supabase.auth.signOut();if(error)throw error;}
 export async function getAccounts():Promise<Account[]>{const{data,error}=await supabase.from('profiles').select('id,name,email,username,role').order('created_at',{ascending:false});if(error)throw error;return(data??[]).map(r=>map(r as Row));}
 export async function updateAccount(id:string,name:string,username:string):Promise<void>{const n=name.trim(),u=username.trim().toLowerCase();if(!n)throw new Error('Name is required.');const e=validateUsername(u);if(e)throw new Error(e);const{error}=await supabase.from('profiles').update({name:n,username:u,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;}
+
+export async function createAdminAccount(name:string,email:string,username:string,password:string):Promise<void>{
+  const n=name.trim(),e=email.trim().toLowerCase(),u=username.trim().toLowerCase();
+  if(!n)throw new Error('Name is required.');
+  const ve=validateUsername(u);if(ve)throw new Error(ve);
+  const vp=validatePassword(password);if(vp)throw new Error(vp);
+  const{data,error}=await supabase.functions.invoke('admin-accounts',{body:{action:'create',name:n,email:e,username:u,password}});
+  if(error)throw error;if(data?.error)throw new Error(data.error);
+}
+export async function deleteAdminAccount(id:string):Promise<void>{
+  const{data,error}=await supabase.functions.invoke('admin-accounts',{body:{action:'delete',id}});
+  if(error)throw error;if(data?.error)throw new Error(data.error);
+}
