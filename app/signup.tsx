@@ -30,6 +30,7 @@ export default function Signup() {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const [loading, setLoading] = useState(false);
+    const [signupError, setSignupError] = useState('');
 
 
     async function handleSignup() {
@@ -40,36 +41,37 @@ export default function Signup() {
             !password ||
             !confirmPassword
         ) {
-            Alert.alert('Error', 'Please complete all fields.');
+            setSignupError('Please complete all fields.');
             return;
         }
 
         const usernameError = validateUsername(username);
 
         if (usernameError) {
-            Alert.alert('Invalid Username', usernameError);
+            setSignupError(usernameError);
             return;
         }
 
         const passwordError = validatePassword(password);
 
         if (passwordError) {
-            Alert.alert('Invalid Password', passwordError);
+            setSignupError(passwordError);
             return;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-            Alert.alert('Invalid Email', 'Enter a valid email address.');
+            setSignupError('Enter a valid email address.');
             return;
         }
 
         if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match.');
+            setSignupError('Passwords do not match.');
             return;
         }
 
         try {
 
+            setSignupError('');
             setLoading(true);
 
             await registerAccount(username.trim(), email.trim(), username.trim(), password);
@@ -90,10 +92,24 @@ export default function Signup() {
 
             console.error('Signup error:', error);
 
-            Alert.alert(
-                'Registration Failed',
-                error.message || 'Unable to create account.'
-            );
+            const code = error?.code || error?.error_code || '';
+            const message = String(error?.message || 'Unable to create account.');
+
+            if (code === 'over_email_send_rate_limit' || message.toLowerCase().includes('email rate limit')) {
+                setSignupError(
+                    'Supabase has reached its built-in email limit (2 emails per hour). No account was created. Wait for the limit to reset, or configure custom SMTP in Supabase to allow signup emails to reach normal Gmail addresses.'
+                );
+            } else if (code === 'email_address_invalid') {
+                setSignupError(
+                    'Supabase rejected this address during its email validation check. This is not a missing-field error. Check the exact address and Supabase Auth logs; if a real address is still rejected, contact Supabase support.'
+                );
+            } else if (code === 'email_address_not_authorized') {
+                setSignupError(
+                    'Supabase’s default email service only sends to members of your Supabase organization. Configure custom SMTP to send confirmation emails to other addresses.'
+                );
+            } else {
+                setSignupError(message);
+            }
 
         } finally {
             setLoading(false);
@@ -134,6 +150,12 @@ export default function Signup() {
                     <Text style={styles.subtitle}>
                         Join us and get started today
                     </Text>
+
+                    {signupError ? (
+                        <View style={styles.errorBox}>
+                            <Text style={styles.errorText}>{signupError}</Text>
+                        </View>
+                    ) : null}
 
                     <View style={styles.form}>
 
@@ -294,6 +316,21 @@ const styles = StyleSheet.create({
 
     form: {
         width: '100%',
+    },
+
+    errorBox: {
+        backgroundColor: '#FEE2E2',
+        borderColor: '#FCA5A5',
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 16,
+    },
+
+    errorText: {
+        color: '#991B1B',
+        fontSize: 13,
+        lineHeight: 19,
     },
 
     label: {
