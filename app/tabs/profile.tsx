@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 
 import { router } from 'expo-router';
 
-import { useSQLiteContext } from 'expo-sqlite';
+
 
 import {
     getLoggedInAccount,
@@ -23,14 +23,14 @@ import {
 export default function Profile() {
 
     // DATABASE CONNECTION
-    const db = useSQLiteContext();
+
 
    const [profile, setProfile] = useState<Account | null>(null);
 const [loading, setLoading] = useState(true);
 
 async function fetchProfile() {
     try {
-        const account = await getLoggedInAccount(db);
+        const account = await getLoggedInAccount();
 
         setProfile(account);
 
@@ -47,7 +47,7 @@ async function fetchProfile() {
 
 useEffect(() => {
     fetchProfile();
-}, [db]);
+}, []);
     return (
 
         <ScrollView style={styles.container}>
@@ -149,7 +149,7 @@ useEffect(() => {
 
                 <TouchableOpacity
                     style={styles.logoutButton}
-                    onPress={() => router.replace('/signIn')}
+                    onPress={async () => { await clearUserSession(); router.replace('/signIn'); }}
                 >
                     <Text style={styles.logoutText}>
                         Log Out

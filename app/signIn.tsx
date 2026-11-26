@@ -20,11 +20,10 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite';
+
 
 import {
-    loginAccount,
-    saveUserSession
+    loginAccount
 } from '../database/account';
 
 type LayoutBox = {
@@ -35,10 +34,9 @@ type LayoutBox = {
 };
 
 export default function SignIn() {
-    const db = useSQLiteContext();
     const { width, height } = useWindowDimensions();
 
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -213,10 +211,10 @@ export default function SignIn() {
     ]);
 
     async function handleLogin() {
-        if (!username.trim() || !password) {
+        if (!email.trim() || !password) {
             Alert.alert(
                 'Missing Information',
-                'Please enter your username and password.'
+                'Please enter your email and password.'
             );
             return;
         }
@@ -224,27 +222,16 @@ export default function SignIn() {
         try {
             setLoading(true);
 
-            const result = await loginAccount(
-                db,
-                username.trim(),
-                password
-            );
+            const result = await loginAccount(email.trim(), password);
 
             if (!result.success || !result.account) {
                 Alert.alert(
                     'Login Failed',
-                    result.message || 'Invalid username or password.'
+                    result.message || 'Invalid email or password.'
                 );
                 return;
             }
 
-            // SAVE LOGGED-IN ACCOUNT ID
-            await saveUserSession(db, result.account.id);
-
-            console.log(
-                'Logged-in account ID:',
-                result.account.id
-            );
 
             // NAVIGATE TO LIST
             router.replace('/tabs/list');
@@ -324,15 +311,15 @@ export default function SignIn() {
 
                                 <View style={styles.form}>
                                     <Text style={styles.label}>
-                                        Username
+                                        Email
                                     </Text>
 
                                     <TextInput
                                         style={styles.input}
-                                        placeholder="Enter your username"
+                                        placeholder="Enter your email"
                                         placeholderTextColor="#94A3B8"
-                                        value={username}
-                                        onChangeText={setUsername}
+                                        value={email}
+                                        onChangeText={setEmail}
                                         autoCapitalize="none"
                                         autoCorrect={false}
                                         editable={!loading}

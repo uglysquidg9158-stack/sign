@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import {
     View,
@@ -16,18 +16,12 @@ import {
 } from 'react-native';
 
 import { router } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite';
 
-import {
-    addAccount,
-    validateUsername,
-    validatePassword,
-    hasAdminAccount
-} from '../database/account';
+
+import { registerAccount, validateUsername, validatePassword } from '../database/account';
 
 export default function Signup() {
 
-    const db = useSQLiteContext();
     const fish = require('../assets/fish.jpg');
 
     const [username, setUsername] = useState('');
@@ -35,29 +29,8 @@ export default function Signup() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    const [adminRegistration, setAdminRegistration] = useState(false);
-    const [adminExists, setAdminExists] = useState(true);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-
-        async function checkAdmin() {
-            try {
-                const exists = await hasAdminAccount(db);
-
-                setAdminExists(exists);
-
-                if (exists) {
-                    setAdminRegistration(false);
-                }
-            } catch (error) {
-                console.error('Admin check failed:', error);
-            }
-        }
-
-        checkAdmin();
-
-    }, [db]);
 
     async function handleSignup() {
 
@@ -99,28 +72,11 @@ export default function Signup() {
 
             setLoading(true);
 
-            // Recheck admin immediately before registration
-            const exists = await hasAdminAccount(db);
-
-            const accountType =
-                adminRegistration && !exists
-                    ? 'admin'
-                    : 'user';
-
-            await addAccount(
-                db,
-                username.trim(),
-                email.trim(),
-                username.trim(),
-                password,
-                accountType
-            );
+            await registerAccount(username.trim(), email.trim(), username.trim(), password);
 
             Alert.alert(
                 'Registration Successful',
-                accountType === 'admin'
-                    ? 'Your admin account has been created!'
-                    : 'Your account has been created!',
+                'Your account has been created. Check your email if verification is enabled.',
                 [
                     {
                         text: 'Continue',
@@ -129,7 +85,6 @@ export default function Signup() {
                 ]
             );
 
-            setAdminExists(accountType === 'admin');
 
         } catch (error: any) {
 

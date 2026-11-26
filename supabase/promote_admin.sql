@@ -1,0 +1,2 @@
+-- Create your first account in the app. Replace the email and run in Supabase SQL Editor. Sign out/in afterward.
+begin;update auth.users set raw_app_meta_data=coalesce(raw_app_meta_data,'{}'::jsonb)||'{"role":"admin"}'::jsonb where lower(email)=lower('REPLACE_WITH_ADMIN_EMAIL');update public.profiles set role='admin',updated_at=now() where lower(email)=lower('REPLACE_WITH_ADMIN_EMAIL');commit;
