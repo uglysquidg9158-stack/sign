@@ -16,12 +16,13 @@ import {
     Image
 } from 'react-native';
 
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import {
     loginAccount,
-    saveUserSession     
+    saveUserSession
 } from '../database/account';
 
 export default function SignIn() {
@@ -30,6 +31,8 @@ export default function SignIn() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
     const fish = require('../assets/fish.jpg');
     const fishLogo = require('../assets/fishLogo.png');
 
@@ -95,103 +98,133 @@ export default function SignIn() {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-        <ImageBackground
-          source={fish}
-           style={styles.bgimage} resizeMode="cover">
-           
 
-                <View style={styles.content}>
+                <ImageBackground
+                    source={fish}
+                    style={styles.bgimage}
+                    resizeMode="cover"
+                >
 
-                    {/**
-                     
-                    <View style={styles.logo}>
-                        <Text style={styles.logoText}>S</Text>
-                    </View>
+                    <View style={styles.content}>
+
+                        {/*
+                        <View style={styles.logo}>
+                            <Text style={styles.logoText}>S</Text>
+                        </View>
                         */}
 
-                    <Image source={fishLogo} 
-                    style={styles.logos} 
-                    resizeMode='contain'/>
-                    <Text style={styles.title}>
-                        Welcome Back
-                    </Text>
-
-                    <Text style={styles.subtitle}>
-                        Sign in to continue to your account
-                    </Text>
-
-                    <View style={styles.form}>
-
-                        <Text style={styles.label}>
-                            Username
-                        </Text>
-
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your username"
-                            placeholderTextColor="#94A3B8"
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            editable={!loading}
-                            returnKeyType="next"
+                        <Image
+                            source={fishLogo}
+                            style={styles.logos}
+                            resizeMode="contain"
                         />
 
-                        <Text style={styles.label}>
-                            Password
+                        <Text style={styles.title}>
+                            Welcome Back
                         </Text>
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your password"
-                            placeholderTextColor="#94A3B8"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            editable={!loading}
-                            returnKeyType="done"
-                            onSubmitEditing={handleLogin}
-                        />
-
-                        <TouchableOpacity
-                            style={[
-                                styles.loginButton,
-                                loading && styles.disabledButton
-                            ]}
-                            onPress={handleLogin}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#FFFFFF" />
-                            ) : (
-                                <Text style={styles.loginText}>
-                                    Sign In
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-
-                    </View>
-
-                    <View style={styles.footer}>
-
-                        <Text style={styles.footerText}>
-                            Don't have an account?
+                        <Text style={styles.subtitle}>
+                            Sign in to continue to your account
                         </Text>
 
-                        <TouchableOpacity
-                            onPress={() => router.push('/signup')}
-                            disabled={loading}
-                        >
-                            <Text style={styles.signupText}>
-                                {' '}Sign Up
+                        <View style={styles.form}>
+
+                            <Text style={styles.label}>
+                                Username
                             </Text>
-                        </TouchableOpacity>
+
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter your username"
+                                placeholderTextColor="#94A3B8"
+                                value={username}
+                                onChangeText={setUsername}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                editable={!loading}
+                                returnKeyType="next"
+                            />
+
+                            <Text style={styles.label}>
+                                Password
+                            </Text>
+
+                            {/* PASSWORD INPUT WITH EYE ICON */}
+                            <View style={styles.passwordWrapper}>
+
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor="#94A3B8"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    editable={!loading}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleLogin}
+                                />
+
+                                <TouchableOpacity
+                                    style={styles.eyeButton}
+                                    onPress={() =>
+                                        setShowPassword(!showPassword)
+                                    }
+                                    disabled={loading}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name={
+                                            showPassword
+                                                ? 'eye-off-outline'
+                                                : 'eye-outline'
+                                        }
+                                        size={23}
+                                        color="#555555"
+                                    />
+                                </TouchableOpacity>
+
+                            </View>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.loginButton,
+                                    loading && styles.disabledButton
+                                ]}
+                                onPress={handleLogin}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#FFFFFF" />
+                                ) : (
+                                    <Text style={styles.loginText}>
+                                        Sign In
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+
+                        </View>
+
+                        <View style={styles.footer}>
+
+                            <Text style={styles.footerText}>
+                                Don't have an account?
+                            </Text>
+
+                            <TouchableOpacity
+                                onPress={() => router.push('/signup')}
+                                disabled={loading}
+                            >
+                                <Text style={styles.signupText}>
+                                    {' '}Sign Up
+                                </Text>
+                            </TouchableOpacity>
+
+                        </View>
 
                     </View>
 
-                </View>
-             </ImageBackground>
+                </ImageBackground>
+
             </ScrollView>
 
         </KeyboardAvoidingView>
@@ -204,11 +237,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#e0e0e0',
     },
+
     bgimage: {
         flex: 1,
         height: '100%',
         width: '100%',
-
     },
 
     scrollContent: {
@@ -217,14 +250,16 @@ const styles = StyleSheet.create({
     },
 
     content: {
-    marginTop: 75,
-    width: '90%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    paddingHorizontal: 28,
-    paddingVertical: 30,
-    borderRadius: 20,
+        marginTop: 75,
+        width: '90%',
+        alignSelf: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.75)',
+        paddingHorizontal: 28,
+        paddingVertical: 30,
+        borderRadius: 20,
+        maxWidth: 600
     },
+
     logo: {
         width: 65,
         height: 65,
@@ -278,6 +313,31 @@ const styles = StyleSheet.create({
         color: '#161616',
     },
 
+    // PASSWORD WRAPPER
+    passwordWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        height: 52,
+        borderRadius: 10,
+        paddingRight: 12,
+        marginBottom: 22,
+    },
+
+    passwordInput: {
+        flex: 1,
+        height: '100%',
+        paddingHorizontal: 15,
+        fontSize: 15,
+        color: '#161616',
+    },
+
+    eyeButton: {
+        padding: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
     loginButton: {
         backgroundColor: '#141414',
         height: 54,
@@ -313,6 +373,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
     },
+
     logos: {
         height: 50,
         width: 50,

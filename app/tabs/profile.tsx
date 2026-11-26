@@ -101,14 +101,14 @@ useEffect(() => {
 
                 </View>
 
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <Text style={styles.sectionTitle}>
                     Account Settings
                 </Text>
 
                 <TouchableOpacity style={styles.option}>
-                    <Text style={styles.optionIcon}>👤</Text>
+                    <Text style={styles.optionIcon}></Text>
 
                     <Text style={styles.optionText}>
                         Personal Information
@@ -118,7 +118,7 @@ useEffect(() => {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.option}>
-                    <Text style={styles.optionIcon}>🔒</Text>
+                    <Text style={styles.optionIcon}></Text>
 
                     <Text style={styles.optionText}>
                         Change Password
@@ -128,7 +128,7 @@ useEffect(() => {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.option}>
-                    <Text style={styles.optionIcon}>🔔</Text>
+                    <Text style={styles.optionIcon}></Text>
 
                     <Text style={styles.optionText}>
                         Notifications
@@ -138,7 +138,7 @@ useEffect(() => {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.option}>
-                    <Text style={styles.optionIcon}>⚙️</Text>
+                    <Text style={styles.optionIcon}></Text>
 
                     <Text style={styles.optionText}>
                         Settings
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     },
 
     logoutButton: {
-        backgroundColor: '#333333',
+        backgroundColor: '#164996',
         padding: 16,
         borderRadius: 10,
         alignItems: 'center',
