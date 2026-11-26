@@ -1,10 +1,103 @@
-import React,{useEffect,useState}from'react';import{View,Text,TextInput,TouchableOpacity,StyleSheet,ScrollView,Alert,Modal,Image,useWindowDimensions}from'react-native';import{router}from'expo-router';import{Account,getAccounts,getLoggedInAccount,updateAccount}from'../../database/account';
-export default function List(){const{width}=useWindowDimensions();const[accounts,setAccounts]=useState<Account[]>([]),[search,setSearch]=useState(''),[modalVisible,setModalVisible]=useState(false),[editingId,setEditingId]=useState<string|null>(null),[expandedId,setExpandedId]=useState<string|null>(null),[name,setName]=useState(''),[email,setEmail]=useState(''),[username,setUsername]=useState(''),[loading,setLoading]=useState(true),[isAdmin,setIsAdmin]=useState(false);const fishy=require('../../assets/fhead.png');
-async function loadAccounts(){try{const me=await getLoggedInAccount();if(!me){router.replace('/signIn');return;}setIsAdmin(me.accountType==='admin');setAccounts(await getAccounts());}catch(e){console.error(e);Alert.alert('Error','Could not load accounts.');}finally{setLoading(false);}}useEffect(()=>{loadAccounts();},[]);
-function openEditModal(a:Account){if(!isAdmin)return;setEditingId(a.id);setName(a.name);setEmail(a.email);setUsername(a.username);setModalVisible(true);}
-async function saveAccount(){if(!editingId)return;if(!name.trim()||!username.trim()){Alert.alert('Error','Fill in all required fields.');return;}try{await updateAccount(editingId,name.trim(),username.trim());Alert.alert('Success','Account updated.');setModalVisible(false);setEditingId(null);await loadAccounts();}catch(e:any){Alert.alert('Error',e.message||'Could not update account.');}}
-const filtered=accounts.filter(a=>a.name.toLowerCase().includes(search.toLowerCase())||a.email.toLowerCase().includes(search.toLowerCase())||a.username.toLowerCase().includes(search.toLowerCase()));
-return <View style={styles.container}><View style={styles.headerContainer}><Image source={fishy} style={{position:'absolute',width:Math.min(width*.4,220),height:Math.min(width*.35,190),right:0,top:-width*.05,zIndex:0}} resizeMode="contain"/><View style={styles.header}><Text style={styles.title}>My Accounts</Text><Text style={styles.subtitle}>{isAdmin?'Manage registered accounts':'Your account'}</Text></View></View><TextInput style={styles.search} placeholder="Search accounts..." placeholderTextColor="#94A3B8" value={search} onChangeText={setSearch}/><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Saved Accounts</Text><Text style={styles.count}>{accounts.length} accounts</Text></View><ScrollView contentContainerStyle={styles.list}>{loading?<Text style={styles.emptyText}>Loading accounts...</Text>:filtered.length===0?<Text style={styles.emptyText}>No accounts found.</Text>:filtered.map(a=><TouchableOpacity key={a.id} style={styles.accountCard} activeOpacity={.9} onPress={()=>setExpandedId(expandedId===a.id?null:a.id)}><View style={styles.accountInfo}><View style={styles.nameRoleRow}><Text style={styles.accountName}>{a.name}</Text><View style={[styles.roleBadge,a.accountType==='admin'?styles.adminBadge:styles.userBadge]}><Text style={styles.roleText}>{a.accountType.toUpperCase()}</Text></View></View><Text style={styles.accountEmail}>{a.email}</Text><Text style={styles.accountUsername}>@{a.username}</Text></View>{isAdmin&&expandedId===a.id&&<View style={styles.actions}><TouchableOpacity style={styles.editButton} onPress={()=>{setExpandedId(null);openEditModal(a);}}><Text style={styles.editText}>Edit</Text></TouchableOpacity></View>}</TouchableOpacity>)}</ScrollView><Modal visible={modalVisible} transparent animationType="slide" onRequestClose={()=>setModalVisible(false)}><View style={styles.modalBackground}><View style={styles.modalContent}><Text style={styles.modalTitle}>Edit Account</Text><ScrollView keyboardShouldPersistTaps="handled"><TextInput style={styles.input} placeholder="Full name" value={name} onChangeText={setName}/><TextInput style={[styles.input,{opacity:.65}]} value={email} editable={false}/><TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} autoCapitalize="none"/><TouchableOpacity style={styles.saveButton} onPress={saveAccount}><Text style={styles.saveText}>Save Changes</Text></TouchableOpacity><TouchableOpacity style={styles.cancelButton} onPress={()=>setModalVisible(false)}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity></ScrollView></View></View></Modal></View>;}
+import React,{useEffect,useState}from'react';
+import{View,Text,TextInput,TouchableOpacity,StyleSheet,ScrollView,Alert,Modal,Image,useWindowDimensions}from'react-native';
+import{router}from'expo-router';
+import{Account,getAccounts,getLoggedInAccount,updateAccount,createAdminAccount,deleteAdminAccount}from'../../database/account';
+
+export default function List(){
+ const{width}=useWindowDimensions();
+ const[accounts,setAccounts]=useState<Account[]>([]);
+ const[search,setSearch]=useState('');
+ const[modalVisible,setModalVisible]=useState(false);
+ const[editingId,setEditingId]=useState<string|null>(null);
+ const[expandedId,setExpandedId]=useState<string|null>(null);
+ const[name,setName]=useState('');
+ const[email,setEmail]=useState('');
+ const[username,setUsername]=useState('');
+ const[password,setPassword]=useState('');
+ const[loading,setLoading]=useState(true);
+ const[saving,setSaving]=useState(false);
+ const[isAdmin,setIsAdmin]=useState(false);
+ const fishy=require('../../assets/fhead.png');
+
+ async function loadAccounts(){
+  try{
+   const me=await getLoggedInAccount();
+   if(!me){router.replace('/signIn');return;}
+   setIsAdmin(me.accountType==='admin');
+   setAccounts(await getAccounts());
+  }catch(e){console.error(e);Alert.alert('Error','Could not load accounts.');}
+  finally{setLoading(false);}
+ }
+ useEffect(()=>{loadAccounts();},[]);
+
+ function openCreateModal(){
+  setEditingId(null);setName('');setEmail('');setUsername('');setPassword('');setModalVisible(true);
+ }
+ function openEditModal(a:Account){
+  if(!isAdmin)return;
+  setEditingId(a.id);setName(a.name);setEmail(a.email);setUsername(a.username);setPassword('');setModalVisible(true);
+ }
+ async function saveAccount(){
+  if(!name.trim()||!username.trim()){Alert.alert('Error','Fill in all required fields.');return;}
+  if(!editingId&&(!email.trim()||!password)){Alert.alert('Error','Email and password are required for a new account.');return;}
+  try{
+   setSaving(true);
+   if(editingId) await updateAccount(editingId,name.trim(),username.trim());
+   else await createAdminAccount(name.trim(),email.trim(),username.trim(),password);
+   Alert.alert('Success',editingId?'Account updated.':'Account created.');
+   setModalVisible(false);setEditingId(null);await loadAccounts();
+  }catch(e:any){Alert.alert('Error',e?.message||'Could not save account.');}
+  finally{setSaving(false);}
+ }
+ function confirmDelete(a:Account){
+  if(!isAdmin)return;
+  Alert.alert('Delete account',`Permanently delete ${a.email}? This cannot be undone.`,[
+   {text:'Cancel',style:'cancel'},
+   {text:'Delete',style:'destructive',onPress:async()=>{
+    try{await deleteAdminAccount(a.id);setExpandedId(null);Alert.alert('Deleted','Account deleted.');await loadAccounts();}
+    catch(e:any){Alert.alert('Error',e?.message||'Could not delete account.');}
+   }}
+  ]);
+ }
+ const filtered=accounts.filter(a=>a.name.toLowerCase().includes(search.toLowerCase())||a.email.toLowerCase().includes(search.toLowerCase())||a.username.toLowerCase().includes(search.toLowerCase()));
+ return <View style={styles.container}>
+  <View style={styles.headerContainer}>
+   <Image source={fishy} style={{position:'absolute',width:Math.min(width*.4,220),height:Math.min(width*.35,190),right:0,top:-width*.05,zIndex:0}} resizeMode="contain"/>
+   <View style={styles.header}><Text style={styles.title}>My Accounts</Text><Text style={styles.subtitle}>{isAdmin?'Manage registered accounts':'Your account'}</Text></View>
+  </View>
+  <TextInput style={styles.search} placeholder="Search accounts..." placeholderTextColor="#94A3B8" value={search} onChangeText={setSearch}/>
+  {isAdmin&&<TouchableOpacity style={styles.addButton} onPress={openCreateModal}><Text style={styles.addButtonText}>+ Create Account</Text></TouchableOpacity>}
+  <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Saved Accounts</Text><Text style={styles.count}>{accounts.length} accounts</Text></View>
+  <ScrollView contentContainerStyle={styles.list}>
+   {loading?<Text style={styles.emptyText}>Loading accounts...</Text>:filtered.length===0?<Text style={styles.emptyText}>No accounts found.</Text>:filtered.map(a=>
+    <TouchableOpacity key={a.id} style={styles.accountCard} activeOpacity={.9} onPress={()=>setExpandedId(expandedId===a.id?null:a.id)}>
+     <View style={styles.accountInfo}>
+      <View style={styles.nameRoleRow}><Text style={styles.accountName}>{a.name}</Text><View style={[styles.roleBadge,a.accountType==='admin'?styles.adminBadge:styles.userBadge]}><Text style={styles.roleText}>{a.accountType.toUpperCase()}</Text></View></View>
+      <Text style={styles.accountEmail}>{a.email}</Text><Text style={styles.accountUsername}>@{a.username}</Text>
+     </View>
+     {isAdmin&&expandedId===a.id&&<View style={styles.actions}>
+      <TouchableOpacity style={styles.editButton} onPress={()=>openEditModal(a)}><Text style={styles.editText}>Edit</Text></TouchableOpacity>
+      {a.accountType!=='admin'&&<TouchableOpacity style={styles.deleteButton} onPress={()=>confirmDelete(a)}><Text style={styles.deleteText}>Delete</Text></TouchableOpacity>}
+     </View>}
+    </TouchableOpacity>
+   )}
+  </ScrollView>
+  <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={()=>setModalVisible(false)}>
+   <View style={styles.modalBackground}><View style={styles.modalContent}>
+    <Text style={styles.modalTitle}>{editingId?'Edit Account':'Create Account'}</Text>
+    <ScrollView keyboardShouldPersistTaps="handled">
+     <TextInput style={styles.input} placeholder="Full name" placeholderTextColor="#555" value={name} onChangeText={setName}/>
+     <TextInput style={[styles.input,editingId?{opacity:.65}:null]} placeholder="Email" placeholderTextColor="#555" value={email} onChangeText={setEmail} editable={!editingId} autoCapitalize="none" keyboardType="email-address"/>
+     <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#555" value={username} onChangeText={setUsername} autoCapitalize="none"/>
+     {!editingId&&<TextInput style={styles.input} placeholder="Temporary password" placeholderTextColor="#555" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none"/>}
+     <TouchableOpacity style={[styles.saveButton,saving&&{opacity:.6}]} onPress={saveAccount} disabled={saving}><Text style={styles.saveText}>{saving?'Please wait...':editingId?'Save Changes':'Create Account'}</Text></TouchableOpacity>
+     <TouchableOpacity style={styles.cancelButton} onPress={()=>setModalVisible(false)} disabled={saving}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+    </ScrollView>
+   </View></View>
+  </Modal>
+ </View>;
+}
+
 const styles = StyleSheet.create({
 
     container: {
