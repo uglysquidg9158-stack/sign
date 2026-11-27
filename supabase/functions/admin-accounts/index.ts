@@ -56,6 +56,28 @@ Deno.serve(async (req: Request) => {
     }
     return json({ error: "Unknown action." }, 400);
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Request failed." }, 400);
+    // Supabase Auth and PostgREST errors may be plain objects, not Error instances.
+    // Preserve their diagnostic fields so the client can display the real failure.
+    const value = error && typeof error === "object"
+      ? error as Record<string, unknown>
+      : null;
+    const message = error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : typeof value?.message === "string"
+          ? value.message
+          : typeof value?.error_description === "string"
+            ? value.error_description
+            : typeof value?.error === "string"
+              ? value.error
+              : "Request failed.";
+
+    return json({
+      error: message,
+      ...(typeof value?.code === "string" ? { code: value.code } : {}),
+      ...(typeof value?.details === "string" ? { details: value.details } : {}),
+      ...(typeof value?.hint === "string" ? { hint: value.hint } : {}),
+    }, 400);
   }
 });
