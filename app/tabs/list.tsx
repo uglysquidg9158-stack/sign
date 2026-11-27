@@ -17,12 +17,14 @@ export default function List(){
  const[loading,setLoading]=useState(true);
  const[saving,setSaving]=useState(false);
  const[isAdmin,setIsAdmin]=useState(false);
+ const[currentAccountId,setCurrentAccountId]=useState<string|null>(null);
  const fishy=require('../../assets/fhead.png');
 
  async function loadAccounts(){
   try{
    const me=await getLoggedInAccount();
    if(!me){router.replace('/signIn');return;}
+   setCurrentAccountId(me.id);
    setIsAdmin(me.accountType==='admin');
    setAccounts(await getAccounts());
   }catch(e){console.error(e);Alert.alert('Error','Could not load accounts.');}
@@ -77,7 +79,7 @@ export default function List(){
      </View>
      {isAdmin&&expandedId===a.id&&<View style={styles.actions}>
       <TouchableOpacity style={styles.editButton} onPress={()=>openEditModal(a)}><Text style={styles.editText}>Edit</Text></TouchableOpacity>
-      {a.accountType!=='admin'&&<TouchableOpacity style={styles.deleteButton} onPress={()=>confirmDelete(a)}><Text style={styles.deleteText}>Delete</Text></TouchableOpacity>}
+      {a.id!==currentAccountId&&<TouchableOpacity style={styles.deleteButton} onPress={()=>confirmDelete(a)}><Text style={styles.deleteText}>Delete</Text></TouchableOpacity>}
      </View>}
     </TouchableOpacity>
    )}
