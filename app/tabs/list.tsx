@@ -16,6 +16,8 @@ export default function List(){
  const[password,setPassword]=useState('');
  const[loading,setLoading]=useState(true);
  const[saving,setSaving]=useState(false);
+ const[saveMessage,setSaveMessage]=useState('');
+ const[saveMessageType,setSaveMessageType]=useState<'error'|'success'|''>('');
  const[isAdmin,setIsAdmin]=useState(false);
  const[currentAccountId,setCurrentAccountId]=useState<string|null>(null);
  const fishy=require('../../assets/fhead.png');
@@ -33,22 +35,26 @@ export default function List(){
  useEffect(()=>{loadAccounts();},[]);
 
  function openCreateModal(){
-  setEditingId(null);setName('');setEmail('');setUsername('');setPassword('');setModalVisible(true);
+  setEditingId(null);setName('');setEmail('');setUsername('');setPassword('');setSaveMessage('');setSaveMessageType('');setModalVisible(true);
  }
  function openEditModal(a:Account){
   if(!isAdmin)return;
-  setEditingId(a.id);setName(a.name);setEmail(a.email);setUsername(a.username);setPassword('');setModalVisible(true);
+  setEditingId(a.id);setName(a.name);setEmail(a.email);setUsername(a.username);setPassword('');setSaveMessage('');setSaveMessageType('');setModalVisible(true);
  }
  async function saveAccount(){
-  if(!name.trim()||!username.trim()){Alert.alert('Error','Fill in all required fields.');return;}
-  if(!editingId&&(!email.trim()||!password)){Alert.alert('Error','Email and password are required for a new account.');return;}
+  setSaveMessage('');setSaveMessageType('');
+  if(!name.trim()||!username.trim()){setSaveMessage('Fill in the name and username fields.');setSaveMessageType('error');return;}
+  if(!editingId&&(!email.trim()||!password)){setSaveMessage('Email and password are required for a new account.');setSaveMessageType('error');return;}
   try{
    setSaving(true);
    if(editingId) await updateAccount(editingId,name.trim(),username.trim());
    else await createAdminAccount(name.trim(),email.trim(),username.trim(),password);
-   Alert.alert('Success',editingId?'Account updated.':'Account created.');
-   setModalVisible(false);setEditingId(null);await loadAccounts();
-  }catch(e:any){Alert.alert('Error',e?.message||'Could not save account.');}
+   setModalVisible(false);setEditingId(null);setSaveMessage('');setSaveMessageType('');await loadAccounts();
+  }catch(e:any){
+   console.error('Save account failed:',e);
+   const message=e?.message||e?.context?.message||'Could not save account. Check your connection and try again.';
+   setSaveMessage(String(message));setSaveMessageType('error');
+  }
   finally{setSaving(false);}
  }
  function confirmDelete(a:Account){
@@ -92,6 +98,7 @@ export default function List(){
      <TextInput style={[styles.input,editingId?{opacity:.65}:null]} placeholder="Email" placeholderTextColor="#555" value={email} onChangeText={setEmail} editable={!editingId} autoCapitalize="none" keyboardType="email-address"/>
      <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#555" value={username} onChangeText={setUsername} autoCapitalize="none"/>
      {!editingId&&<TextInput style={styles.input} placeholder="Temporary password" placeholderTextColor="#555" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none"/>}
+     {saveMessage!==''&&<Text style={[styles.formMessage,saveMessageType==='error'?styles.formError:styles.formSuccess]}>{saveMessage}</Text>}
      <TouchableOpacity style={[styles.saveButton,saving&&{opacity:.6}]} onPress={saveAccount} disabled={saving}><Text style={styles.saveText}>{saving?'Please wait...':editingId?'Save Changes':'Create Account'}</Text></TouchableOpacity>
      <TouchableOpacity style={styles.cancelButton} onPress={()=>setModalVisible(false)} disabled={saving}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
     </ScrollView>
@@ -342,6 +349,10 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontWeight: '600'
     },
+
+    formMessage: { padding: 11, borderRadius: 8, marginBottom: 12, overflow: 'hidden' },
+    formError: { backgroundColor: '#ffe1e1', color: '#8b1e1e' },
+    formSuccess: { backgroundColor: '#dff5e5', color: '#14532d' },
 
     saveButton: {
         backgroundColor: '#3f3f3f',
