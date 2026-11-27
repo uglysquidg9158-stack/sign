@@ -1,11 +1,11 @@
+
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    ActivityIndicator,
-    Alert
+    ActivityIndicator
 } from 'react-native';
 
 import React, { useEffect, useState } from 'react';
@@ -49,23 +49,6 @@ useEffect(() => {
     fetchProfile();
 }, [db]);
 
-    function confirmLogout() {
-        Alert.alert(
-            'Log Out',
-            'Are you sure you want to log out?',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel'
-                },
-                {
-                    text: 'Log Out',
-                    style: 'destructive',
-                    onPress: () => router.replace('/signIn')
-                }
-            ]
-        );
-    }
 
     return (
 
@@ -168,7 +151,7 @@ useEffect(() => {
 
                 <TouchableOpacity
                     style={styles.logoutButton}
-                    onPress={confirmLogout}
+                    onPress={() => router.replace('/signIn')}
                 >
                     <Text style={styles.logoutText}>
                         Log Out
