@@ -5,7 +5,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
+    Alert
 } from 'react-native';
 
 import React, { useEffect, useState } from 'react';
@@ -48,6 +49,28 @@ async function fetchProfile() {
 useEffect(() => {
     fetchProfile();
 }, []);
+
+    function confirmLogout() {
+        Alert.alert(
+            'Log Out',
+            'Are you sure you want to log out?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Log Out',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await clearUserSession();
+                        router.replace('/signIn');
+                    }
+                }
+            ]
+        );
+    }
+
     return (
 
         <ScrollView style={styles.container}>
@@ -149,7 +172,7 @@ useEffect(() => {
 
                 <TouchableOpacity
                     style={styles.logoutButton}
-                    onPress={async () => { await clearUserSession(); router.replace('/signIn'); }}
+                    onPress={confirmLogout}
                 >
                     <Text style={styles.logoutText}>
                         Log Out
