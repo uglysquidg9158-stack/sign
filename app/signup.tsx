@@ -10,7 +10,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert,
     ActivityIndicator,
     ImageBackground
 } from 'react-native';
@@ -31,6 +30,7 @@ export default function Signup() {
 
     const [loading, setLoading] = useState(false);
     const [signupError, setSignupError] = useState('');
+    const [signupSuccess, setSignupSuccess] = useState(false);
 
 
     async function handleSignup() {
@@ -76,16 +76,7 @@ export default function Signup() {
 
             await registerAccount(username.trim(), email.trim(), username.trim(), password);
 
-            Alert.alert(
-                'Registration Successful',
-                'Your account has been created. Check your email if verification is enabled.',
-                [
-                    {
-                        text: 'Continue',
-                        onPress: () => router.replace('/signIn')
-                    }
-                ]
-            );
+            setSignupSuccess(true);
 
 
         } catch (error: any) {
@@ -151,6 +142,22 @@ export default function Signup() {
                         Join us and get started today
                     </Text>
 
+                    {signupSuccess ? (
+                        <View style={styles.successBox}>
+                            <Text style={styles.successTitle}>Registration Successful!</Text>
+                            <Text style={styles.successText}>
+                                Your account has been created.
+                                If email verification is enabled, check your inbox and confirm your email before signing in.
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.successButton}
+                                onPress={() => router.replace('/signIn')}
+                            >
+                                <Text style={styles.signupButtonText}>Continue to Sign In</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <>
                     {signupError ? (
                         <View style={styles.errorBox}>
                             <Text style={styles.errorText}>{signupError}</Text>
@@ -245,6 +252,8 @@ export default function Signup() {
                         </TouchableOpacity>
 
                     </View>
+                        </>
+                    )}
 
                 </View>
            </ImageBackground>
@@ -316,6 +325,41 @@ const styles = StyleSheet.create({
 
     form: {
         width: '100%',
+    },
+
+    successBox: {
+        backgroundColor: '#ECFDF5',
+        borderColor: '#86EFAC',
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 18,
+        marginTop: 8,
+        alignItems: 'center',
+    },
+
+    successTitle: {
+        color: '#166534',
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+
+    successText: {
+        color: '#166534',
+        fontSize: 14,
+        lineHeight: 21,
+        textAlign: 'center',
+        marginBottom: 18,
+    },
+
+    successButton: {
+        backgroundColor: '#166534',
+        height: 52,
+        alignSelf: 'stretch',
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
     errorBox: {
