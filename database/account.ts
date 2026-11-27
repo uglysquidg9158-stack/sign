@@ -9,15 +9,35 @@ export async function clearUserSession():Promise<void>{const{error}=await supaba
 export async function getAccounts():Promise<Account[]>{const{data,error}=await supabase.from('profiles').select('id,name,email,username,role').order('created_at',{ascending:false});if(error)throw error;return(data??[]).map(r=>map(r as Row));}
 export async function updateAccount(id:string,name:string,username:string):Promise<void>{const n=name.trim(),u=username.trim().toLowerCase();if(!n)throw new Error('Name is required.');const e=validateUsername(u);if(e)throw new Error(e);const{error}=await supabase.from('profiles').update({name:n,username:u,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;}
 
+async function getFunctionError(error: unknown): Promise<Error> {
+  const fallback = error instanceof Error ? error.message : 'The server rejected the request.';
+  const response = (error as { context?: Response } | null)?.context;
+  if (response) {
+    try {
+      const payload = await response.clone().json();
+      if (typeof payload?.error === 'string' && payload.error.trim()) {
+        return new Error(payload.error);
+      }
+      if (typeof payload?.message === 'string' && payload.message.trim()) {
+        return new Error(payload.message);
+      }
+    } catch {
+      // Keep the original error if the response is not JSON.
+    }
+    return new Error(`${fallback} (HTTP ${response.status})`);
+  }
+  return new Error(fallback);
+}
+
 export async function createAdminAccount(name:string,email:string,username:string,password:string):Promise<void>{
   const n=name.trim(),e=email.trim().toLowerCase(),u=username.trim().toLowerCase();
   if(!n)throw new Error('Name is required.');
   const ve=validateUsername(u);if(ve)throw new Error(ve);
   const vp=validatePassword(password);if(vp)throw new Error(vp);
   const{data,error}=await supabase.functions.invoke('admin-accounts',{body:{action:'create',name:n,email:e,username:u,password}});
-  if(error)throw error;if(data?.error)throw new Error(data.error);
+  if(error)throw await getFunctionError(error);if(data?.error)throw new Error(data.error);
 }
 export async function deleteAdminAccount(id:string):Promise<void>{
   const{data,error}=await supabase.functions.invoke('admin-accounts',{body:{action:'delete',id}});
-  if(error)throw error;if(data?.error)throw new Error(data.error);
+  if(error)throw await getFunctionError(error);if(data?.error)throw new Error(data.error);
 }
