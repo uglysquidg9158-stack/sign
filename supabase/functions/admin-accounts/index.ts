@@ -46,9 +46,8 @@ Deno.serve(async (req: Request) => {
       const id = String(body.id ?? "");
       if (!id) return json({ error: "Account ID is required." }, 400);
       if (id === user.id) return json({ error: "You cannot delete your own administrator account." }, 400);
-      const { data: target, error: targetError } = await admin.from("profiles").select("role").eq("id", id).single();
-      if (targetError) throw targetError;
-      if (target.role === "admin") return json({ error: "Administrator accounts cannot be deleted here." }, 403);
+      const { data: target, error: targetError } = await admin.from("profiles").select("id").eq("id", id).single();
+      if (targetError || !target) return json({ error: "Account not found." }, 404);
       const { error } = await admin.auth.admin.deleteUser(id);
       if (error) throw error;
       return json({ success: true });
