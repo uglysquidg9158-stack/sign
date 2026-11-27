@@ -22,9 +22,11 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: userError } = await authClient.auth.getUser(authHeader.slice(7));
   if (userError || !user) return json({ error: "Invalid session" }, 401);
 
+  // getUser() returns server-verified user data. app_metadata is controlled by the server,
+  // unlike user_metadata, so it is safe to use for this administrator check.
+  if (user.app_metadata?.role !== "admin") return json({ error: "Administrator access required" }, 403);
+
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
-  const { data: caller, error: callerError } = await admin.from("profiles").select("role").eq("id", user.id).single();
-  if (callerError || caller?.role !== "admin") return json({ error: "Administrator access required" }, 403);
 
   try {
     const body = await req.json();
